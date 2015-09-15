@@ -12,8 +12,10 @@ import java.util.StringTokenizer;
 public class Main {
 
 	private static final String STUDENTS_FILE = "students.csv";
+	//private static final String STUDENTS_DYNAMIC =	"students2.csv";
 	private Random random = new Random();
 	private ArrayList<Student> students;
+	private ArrayList<Student> students_dynamic;
 	private Scanner keyboard = new Scanner(System.in);
 
 	public static void main(String[] args) throws IOException {
@@ -25,27 +27,53 @@ public class Main {
 	
 	public Main() throws IOException{
 		loadStudentsFromFile();
+		load_dynamic();
+	}
+	
+	public void load_dynamic() throws IOException{
+		File originalFile = new File(STUDENTS_FILE);
+		Scanner input = new Scanner(originalFile);
+		students_dynamic = new ArrayList<>();
+		
+		while(input.hasNextLine()){
+			StringTokenizer tokens = new StringTokenizer(input.nextLine(), ",");
+			students_dynamic.add(new Student(tokens.nextToken(), Integer.parseInt(tokens.nextToken())));
+		}
+		input.close();
+		
 	}
 	
 	public void run() throws IOException{
-		while(askToPickStudent()){
-			Student student = pickRandomStudent();
-			System.out.println(student);
-			System.out.printf("Did %s get it right? (y/n)%n", student);
-			if(keyboard.nextLine().equalsIgnoreCase("y")){
-				student.addPoint();
-				System.out.printf("Great Job +1 point. %s has %d points.%n",
-						student, student.getPoints());
-				saveStudentsToFile();
-			}else{
-				System.out.printf("Better luck next time! %s has %d points.%n",
-						student, student.getPoints());
+		do{
+			while(askToPickStudent()){
+					Student student = pickRandomStudent();
+					System.out.println(student);
+					System.out.printf("Did %s get it right? (y/n)%n", student);
+					
+					if(keyboard.nextLine().equalsIgnoreCase("y")){
+						student.addPoint();
+						System.out.printf("Great Job +1 point. %s has %d points.%n",
+								student, student.getPoints());
+						students_dynamic.remove(student);
+						saveStudentsToFile();
+						
+					}else{
+						System.out.printf("Better luck next time! %s has %d points.%n",
+								student, student.getPoints());
+						//students_dynamic.remove(student);
+						
+					}
+					
+					if(students_dynamic.isEmpty()){
+						System.out.println("\nList empty. Restarting List\n");
+						load_dynamic();
+					}
 			}
-		}
+		}while(!students_dynamic.isEmpty());
 	}
 
 	private Student pickRandomStudent() {
-		Student student = students.get(random.nextInt(students.size()));
+		Student student = students_dynamic.get(random.nextInt(students_dynamic.size()));
 		return student;
 	}
 
@@ -71,6 +99,14 @@ public class Main {
 	private void saveStudentsToFile() throws IOException{
 		PrintWriter output = new PrintWriter(STUDENTS_FILE);
 		for(Student s : students){
+			output.println(s.toCsvString());
+		}
+		output.close();
+	}
+	
+	private void saveStudentsToFile2() throws IOException{
+		PrintWriter output = new PrintWriter(STUDENTS_FILE);
+		for(Student s : students_dynamic){
 			output.println(s.toCsvString());
 		}
 		output.close();
